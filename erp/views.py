@@ -1,7 +1,10 @@
 from django.contrib.auth.models import User, Group
 from rest_framework import viewsets
 from rest_framework import permissions
-from .serializers import UserSerializer, GroupSerializer
+
+from erp.models import Goods, StorageLocation, Validate, UserProfile
+from erp.serializers import UserSerializer, GroupSerializer, GoodsSerializer, StorageLocationSerializer, \
+    ValidateSerializer
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -19,4 +22,31 @@ class GroupViewSet(viewsets.ModelViewSet):
     """
     queryset = Group.objects.all()
     serializer_class = GroupSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+
+class GoodsViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows goods to be viewed or edited.
+    """
+    queryset = Goods.objects.all()
+    serializer_class = GoodsSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+
+class StorageLocationViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows storagelocation to be viewed or edited.
+    """
+    queryset = StorageLocation.objects.all()
+    serializer_class = StorageLocationSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+
+class ValidateViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows storagelocation to be viewed or edited.
+    """
+    queryset = Validate.objects.all()
+    serializer_class = ValidateSerializer
     permission_classes = [permissions.IsAuthenticated]

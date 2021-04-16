@@ -1,3 +1,5 @@
+import datetime
+
 from django.db import models
 
 # Create your models here.
@@ -24,7 +26,7 @@ class CommonInfo(models.Model):
     updated_by = models.CharField('更新人', max_length=32, null=True, blank=True)
     created_time = models.DateTimeField('创建时间', auto_now_add=True)
     updated_time = models.DateTimeField('更新时间', auto_now=True)
-    is_active = models.BooleanField('是否启用', default=False)
+    is_active = models.BooleanField('是否启用', default=True)
 
     class Meta:
         abstract = True
@@ -33,7 +35,10 @@ class CommonInfo(models.Model):
 # 储藏位置
 class StorageLocation(CommonInfo):
     location = models.CharField('位置', max_length=32)
-    parent_loc_id = models.IntegerField('归属位置', null=True)
+    parent = models.ForeignKey('self',
+                               on_delete=models.CASCADE,
+                               verbose_name='归属位置',
+                               null=True)
 
     class Meta:
         verbose_name = 'storage location'
@@ -46,10 +51,25 @@ class StorageLocation(CommonInfo):
 class Validate(CommonInfo):
     mfg = models.DateField('生产日期', null=True)
     vali_days = models.IntegerField('有效天数', null=True)
-    exp = models.DateField('有效日期')
+    exp = models.DateField('有效日期', null=True)
 
     class Meta:
         verbose_name = 'expire date'
+
+    def save(self, *args, **kwargs):
+        """
+        Use the mfg and validays generate exp.
+        """
+        if self.exp is None:
+            if self.mfg is None:
+                raise Exception("生产日期和有效日期不能都为空")
+            else:
+                if self.vali_days is None:
+                    raise Exception("有效天数不能为空")
+                else:
+                    delta = datetime.timedelta(days=self.vali_days)
+                    self.exp = self.mfg + delta
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"有效期：{self.exp}"
@@ -57,7 +77,7 @@ class Validate(CommonInfo):
 
 # 货物
 class Goods(CommonInfo):
-    user = models.ForeignKey(UserProfile, on_delete=models.CASCADE, verbose_name='用户')
+    user = models.ForeignKey('auth.User', on_delete=models.CASCADE, verbose_name='用户')
     location = models.ForeignKey(StorageLocation, on_delete=models.CASCADE, verbose_name='位置')
     validate = models.ForeignKey(Validate, on_delete=models.CASCADE, verbose_name='有效期')
     img = models.CharField('图片', max_length=125)
