@@ -57,7 +57,7 @@ class GroupSerializer(serializers.HyperlinkedModelSerializer):
 class GoodsSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Goods
-        fields = ['location', 'validate', 'img', 'name', 'created_by', 'updated_by']
+        fields = ['location', 'validate', 'img', 'name', 'created_by']
 
     # 获取当前登录的用户
     created_by = serializers.HiddenField(
@@ -68,7 +68,7 @@ class GoodsSerializer(serializers.HyperlinkedModelSerializer):
 class StorageLocationSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = StorageLocation
-        fields = ['location', 'parent', 'created_by', 'updated_by']
+        fields = ['location', 'parent', 'created_by']
 
     # 获取当前登录的用户
     created_by = serializers.HiddenField(
@@ -79,7 +79,7 @@ class StorageLocationSerializer(serializers.HyperlinkedModelSerializer):
 class ValidateSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Validate
-        fields = ['mfg', 'vali_days', 'exp', 'remain_days', 'created_by', 'updated_by']
+        fields = ['mfg', 'vali_days', 'exp', 'remain_days', 'created_by']
 
     # 获取当前登录的用户
     created_by = serializers.HiddenField(
