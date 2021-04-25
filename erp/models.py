@@ -6,10 +6,42 @@ from django.db import models
 from django.contrib.auth.models import User
 
 
+# 通用属性
+class CommonInfo(models.Model):
+    revision = models.IntegerField('乐观锁', default=0, blank=False)
+    created_by = models.ForeignKey(User,
+                                   related_name="%(app_label)s_%(class)s_related",
+                                   verbose_name='创建人',
+                                   related_query_name="%(app_label)s_%(class)ss",
+                                   on_delete=models.CASCADE)
+    updated_by = models.CharField('更新人', max_length=255, null=True)
+    created_time = models.DateTimeField('创建时间', auto_now_add=True)
+    updated_time = models.DateTimeField('更新时间', auto_now=True)
+    is_active = models.BooleanField('是否启用', default=True)
+
+    # user = models.ForeignKey('auth.User',
+    #                          on_delete=models.CASCADE,
+    #                          default=1,
+    #                          verbose_name='用户')
+
+    class Meta:
+        abstract = True
+
+    # def save(self, *args, **kwargs):
+    #     if not self.pk:
+    #         self.created_by = self.user
+    #     else:
+    #         self.updated_by = self.user
+    #     super().save(*args, **kwargs)
+
+
 # 用户
-class UserProfile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE,
-                                related_name='profile', verbose_name='用户')
+class UserProfile(CommonInfo):
+    user = models.OneToOneField(User,
+                                on_delete=models.CASCADE,
+                                parent_link=True,
+                                related_name='profile',
+                                verbose_name='用户')
     openid = models.CharField('OpenId', max_length=32, blank=False)
 
     class Meta:
@@ -17,19 +49,6 @@ class UserProfile(models.Model):
 
     def __str__(self):
         return f"{self.user.__str__()}"
-
-
-# 通用属性
-class CommonInfo(models.Model):
-    revision = models.IntegerField('乐观锁', default=0, blank=False)
-    created_by = models.CharField('创建人', max_length=32, null=True, blank=True)
-    updated_by = models.CharField('更新人', max_length=32, null=True, blank=True)
-    created_time = models.DateTimeField('创建时间', auto_now_add=True)
-    updated_time = models.DateTimeField('更新时间', auto_now=True)
-    is_active = models.BooleanField('是否启用', default=True)
-
-    class Meta:
-        abstract = True
 
 
 # 储藏位置
@@ -53,8 +72,21 @@ class Validate(CommonInfo):
     vali_days = models.IntegerField('有效天数', null=True)
     exp = models.DateField('有效日期', null=True)
 
+    def remain_days(self):
+        """
+        Use the exp to calculate the remain days.
+        :return: remain days int
+        """
+        today = datetime.date.today()
+        exp = self.exp
+        return (exp - today).days if (exp - today).days > 0 else 0
+
+    remain_days.admin_order_field = 'exp'
+    remain_days.short_description = '到期天数'
+
     class Meta:
         verbose_name = 'expire date'
+        ordering = ['exp']
 
     def save(self, *args, **kwargs):
         """
@@ -77,9 +109,8 @@ class Validate(CommonInfo):
 
 # 货物
 class Goods(CommonInfo):
-    user = models.ForeignKey('auth.User', on_delete=models.CASCADE, verbose_name='用户')
     location = models.ForeignKey(StorageLocation, on_delete=models.CASCADE, verbose_name='位置')
-    validate = models.ForeignKey(Validate, on_delete=models.CASCADE, verbose_name='有效期')
+    validate = models.ForeignKey(Validate, on_delete=models.CASCADE, verbose_name='有效期', null=True)
     img = models.CharField('图片', max_length=125)
     name = models.CharField('物品名称', max_length=125)
 
