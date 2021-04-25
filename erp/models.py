@@ -14,25 +14,12 @@ class CommonInfo(models.Model):
                                    verbose_name='创建人',
                                    related_query_name="%(app_label)s_%(class)ss",
                                    on_delete=models.CASCADE)
-    updated_by = models.CharField('更新人', max_length=255, null=True)
     created_time = models.DateTimeField('创建时间', auto_now_add=True)
     updated_time = models.DateTimeField('更新时间', auto_now=True)
     is_active = models.BooleanField('是否启用', default=True)
 
-    # user = models.ForeignKey('auth.User',
-    #                          on_delete=models.CASCADE,
-    #                          default=1,
-    #                          verbose_name='用户')
-
     class Meta:
         abstract = True
-
-    # def save(self, *args, **kwargs):
-    #     if not self.pk:
-    #         self.created_by = self.user
-    #     else:
-    #         self.updated_by = self.user
-    #     super().save(*args, **kwargs)
 
 
 # 用户
@@ -57,10 +44,12 @@ class StorageLocation(CommonInfo):
     parent = models.ForeignKey('self',
                                on_delete=models.CASCADE,
                                verbose_name='归属位置',
-                               null=True)
+                               null=True,
+                               blank=True)
 
     class Meta:
         verbose_name = 'storage location'
+        ordering = ('id',)
 
     def __str__(self):
         return f"{self.location}"
@@ -109,13 +98,16 @@ class Validate(CommonInfo):
 
 # 货物
 class Goods(CommonInfo):
+    user = models.ForeignKey(UserProfile, on_delete=models.CASCADE, verbose_name='用户')
     location = models.ForeignKey(StorageLocation, on_delete=models.CASCADE, verbose_name='位置')
-    validate = models.ForeignKey(Validate, on_delete=models.CASCADE, verbose_name='有效期', null=True)
-    img = models.CharField('图片', max_length=125)
+    validate = models.OneToOneField(Validate, on_delete=models.CASCADE, verbose_name='有效期', null=True, blank=True)
+    img = models.ImageField('图片')
     name = models.CharField('物品名称', max_length=125)
 
     class Meta:
         verbose_name = 'goods'
+        verbose_name_plural = verbose_name
+        ordering = ('id',)
 
     def __str__(self):
-        return f"物品: {self.name}"
+        return f"物品:[{self.id}. {self.name}]"

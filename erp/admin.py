@@ -10,8 +10,8 @@ class StorageLocationAdmin(admin.ModelAdmin):
 
 @admin.register(Validate)
 class ValidateAdmin(admin.ModelAdmin):
-    fields = ['created_by', 'updated_by', 'created_time', 'mfg', 'vali_days', 'exp', 'remain_days']
-    readonly_fields = ['created_by', 'updated_by', 'created_time', 'remain_days']
+    fields = ['created_by', 'created_time', 'mfg', 'vali_days', 'exp', 'remain_days']
+    readonly_fields = ['created_by', 'created_time', 'remain_days']
 
 
 @admin.register(Goods)

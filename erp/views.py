@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User, Group
 from rest_framework import viewsets
 from rest_framework import permissions
+from rest_framework.response import Response
 
 from erp.models import Goods, StorageLocation, Validate, UserProfile
 from erp.permissions import IsOwnerOrReadOnly
@@ -44,7 +45,7 @@ class GoodsViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated, IsOwnerOrReadOnly]
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        serializer.save(created_by=self.request.user)
 
 
 class StorageLocationViewSet(viewsets.ModelViewSet):
@@ -55,6 +56,9 @@ class StorageLocationViewSet(viewsets.ModelViewSet):
     serializer_class = StorageLocationSerializer
     permission_classes = [permissions.IsAuthenticated, IsOwnerOrReadOnly]
 
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
+
 
 class ValidateViewSet(viewsets.ModelViewSet):
     """
@@ -63,3 +67,6 @@ class ValidateViewSet(viewsets.ModelViewSet):
     queryset = Validate.objects.all()
     serializer_class = ValidateSerializer
     permission_classes = [permissions.IsAuthenticated, IsOwnerOrReadOnly]
+
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
