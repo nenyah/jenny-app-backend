@@ -3,9 +3,9 @@ from rest_framework import viewsets
 from rest_framework import permissions
 from rest_framework.response import Response
 
-from erp.models import Goods, StorageLocation, Validate, UserProfile
+from erp.models import Goods, Position, Validate, UserProfile
 from erp.permissions import IsOwnerOrReadOnly
-from erp.serializers import UserSerializer, GroupSerializer, GoodsSerializer, StorageLocationSerializer, \
+from erp.serializers import UserSerializer, GroupSerializer, GoodsSerializer, PositionSerializer, \
     ValidateSerializer, UserProfileSerializer
 
 
@@ -52,8 +52,8 @@ class StorageLocationViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows storagelocation to be viewed or edited.
     """
-    queryset = StorageLocation.objects.all()
-    serializer_class = StorageLocationSerializer
+    queryset = Position.objects.all()
+    serializer_class = PositionSerializer
     permission_classes = [permissions.IsAuthenticated, IsOwnerOrReadOnly]
 
     def perform_create(self, serializer):

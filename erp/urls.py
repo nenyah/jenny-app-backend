@@ -4,7 +4,7 @@ from erp import views
 
 # Create a router and register our viewsets with it.
 router = routers.DefaultRouter()
-# router.register(r'users', views.UserViewSet)
+router.register(r'users', views.UserViewSet)
 router.register(r'usersprofile', views.UserProfileViewSet)
 # router.register(r'groups', views.GroupViewSet)
 router.register(r'goods', views.GoodsViewSet)

@@ -32,34 +32,45 @@ class UserProfile(CommonInfo):
     openid = models.CharField('OpenId', max_length=32, blank=False)
 
     class Meta:
-        verbose_name = 'user profile'
+        verbose_name = '用户信息'
+        verbose_name_plural = verbose_name
+        ordering = ('id',)
 
     def __str__(self):
         return f"{self.user.__str__()}"
 
 
 # 储藏位置
-class StorageLocation(CommonInfo):
+class Position(CommonInfo):
+    LOC_TYPE = (
+        (0, "楼层"),
+        (1, "房间"),
+        (2, "位置"),
+        (3, "不分"),
+    )
     location = models.CharField('位置', max_length=32)
+    loc_type = models.IntegerField(choices=LOC_TYPE, verbose_name="位置分类", help_text="位置分类", default=0)
     parent = models.ForeignKey('self',
                                on_delete=models.CASCADE,
                                verbose_name='归属位置',
+                               help_text='归属位置',
                                null=True,
                                blank=True)
 
     class Meta:
-        verbose_name = 'storage location'
+        verbose_name = '储存位置'
+        verbose_name_plural = verbose_name
         ordering = ('id',)
 
     def __str__(self):
-        return f"{self.location}"
+        return f"储存位置: {self.location}"
 
 
 # 效期
 class Validate(CommonInfo):
-    mfg = models.DateField('生产日期', null=True)
-    vali_days = models.IntegerField('有效天数', null=True)
-    exp = models.DateField('有效日期', null=True)
+    mfg = models.DateField('生产日期', null=True, blank=True)
+    vali_days = models.IntegerField('有效天数', null=True, blank=True)
+    exp = models.DateField('有效日期', null=True, blank=True)
 
     def remain_days(self):
         """
@@ -74,7 +85,8 @@ class Validate(CommonInfo):
     remain_days.short_description = '到期天数'
 
     class Meta:
-        verbose_name = 'expire date'
+        verbose_name = '有效日期'
+        verbose_name_plural = verbose_name
         ordering = ['exp']
 
     def save(self, *args, **kwargs):
@@ -98,14 +110,14 @@ class Validate(CommonInfo):
 
 # 货物
 class Goods(CommonInfo):
-    user = models.ForeignKey(UserProfile, on_delete=models.CASCADE, verbose_name='用户')
-    location = models.ForeignKey(StorageLocation, on_delete=models.CASCADE, verbose_name='位置')
+    # user = models.ForeignKey(UserProfile, on_delete=models.CASCADE, verbose_name='用户')
+    position = models.ForeignKey(Position, on_delete=models.CASCADE, verbose_name='位置')
     validate = models.OneToOneField(Validate, on_delete=models.CASCADE, verbose_name='有效期', null=True, blank=True)
-    img = models.ImageField('图片')
+    img = models.ImageField('图片', upload_to='uploads/', null=True, blank=True)
     name = models.CharField('物品名称', max_length=125)
 
     class Meta:
-        verbose_name = 'goods'
+        verbose_name = '物品'
         verbose_name_plural = verbose_name
         ordering = ('id',)
 

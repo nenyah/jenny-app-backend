@@ -1,9 +1,9 @@
 from django.contrib import admin
-from erp.models import StorageLocation, Validate, Goods
+from erp.models import Position, Validate, Goods
 
 
 # Register your models here.
-@admin.register(StorageLocation)
+@admin.register(Position)
 class StorageLocationAdmin(admin.ModelAdmin):
     fields = ['location', 'parent']
 

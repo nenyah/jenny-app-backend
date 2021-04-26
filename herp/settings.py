@@ -127,3 +127,6 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 10,
     'DATETIME_FORMAT': '%Y-%m-%d %H:%M:%S',
 }
+# Media 配置
+MEDIA_URL = "/meida/"
+MEDIA_ROOT = BASE_DIR / "media"

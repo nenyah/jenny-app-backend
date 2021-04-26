@@ -1,6 +1,6 @@
 from django.contrib.auth.models import User, Group
 from rest_framework import serializers
-from erp.models import UserProfile, Goods, StorageLocation, Validate
+from erp.models import UserProfile, Goods, Position, Validate
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
@@ -35,8 +35,9 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserProfile
-        fields = ['user', 'openid', 'created_by']
+        fields = ['id', 'user', 'openid', 'created_by']
 
+    user = UserSerializer
     # 获取当前登录的用户
     created_by = serializers.HiddenField(
         default=serializers.CurrentUserDefault()
@@ -46,7 +47,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
 class GroupSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Group
-        fields = ['url', 'name', 'created_by']
+        fields = ['id', 'url', 'name', 'created_by']
 
     # 获取当前登录的用户
     created_by = serializers.HiddenField(
@@ -54,21 +55,10 @@ class GroupSerializer(serializers.HyperlinkedModelSerializer):
     )
 
 
-class GoodsSerializer(serializers.HyperlinkedModelSerializer):
+class PositionSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
-        model = Goods
-        fields = ['location', 'validate', 'img', 'name', 'created_by']
-
-    # 获取当前登录的用户
-    created_by = serializers.HiddenField(
-        default=serializers.CurrentUserDefault()
-    )
-
-
-class StorageLocationSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta:
-        model = StorageLocation
-        fields = ['location', 'parent', 'created_by']
+        model = Position
+        fields = '__all__'
 
     # 获取当前登录的用户
     created_by = serializers.HiddenField(
@@ -79,9 +69,40 @@ class StorageLocationSerializer(serializers.HyperlinkedModelSerializer):
 class ValidateSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Validate
-        fields = ['mfg', 'vali_days', 'exp', 'remain_days', 'created_by']
+        fields = '__all__'
 
     # 获取当前登录的用户
     created_by = serializers.HiddenField(
         default=serializers.CurrentUserDefault()
     )
+
+
+class GoodsSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = Goods
+        fields = ['id', 'position', 'validate', 'img', 'name', 'created_by', 'url']
+
+    position = PositionSerializer()
+
+    validate = ValidateSerializer(required=False)
+    # 获取当前登录的用户
+    created_by = serializers.HiddenField(
+        default=serializers.CurrentUserDefault()
+    )
+
+    def create(self, validated_data):
+        print(validated_data)
+        location_data = validated_data.pop("position")
+        validate_data = validated_data.pop("validate")
+        position = Position.objects.create(**location_data)
+        # 如果没有 validate 就不用创建
+        tmp_validate = dict(validate_data)
+        if tmp_validate['mfg'] is not None or tmp_validate['exp'] is not None:
+            validate = Validate.objects.create(**validate_data)
+            validated_data['validate'] = validate
+        validated_data['position'] = position
+        goods = Goods.objects.create(**validated_data)
+        return goods
+
+    def update(self, instance, validated_data):
+        return instance
