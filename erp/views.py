@@ -1,12 +1,13 @@
 from django.contrib.auth.models import User, Group
-from rest_framework import viewsets
 from rest_framework import permissions
+from rest_framework import viewsets
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
-from erp.models import Goods, Position, Validate, UserProfile
+from erp.models import Goods, UserProfile
 from erp.permissions import IsOwnerOrReadOnly
-from erp.serializers import UserSerializer, GroupSerializer, GoodsSerializer, PositionSerializer, \
-    ValidateSerializer, UserProfileSerializer
+from erp.serializers import UserSerializer, GroupSerializer, GoodsSerializer, UserProfileSerializer
+from erp.utils import WechatLogin
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -48,25 +49,9 @@ class GoodsViewSet(viewsets.ModelViewSet):
         serializer.save(created_by=self.request.user)
 
 
-class StorageLocationViewSet(viewsets.ModelViewSet):
-    """
-    API endpoint that allows storagelocation to be viewed or edited.
-    """
-    queryset = Position.objects.all()
-    serializer_class = PositionSerializer
-    permission_classes = [permissions.IsAuthenticated, IsOwnerOrReadOnly]
+class LoginView(APIView):
 
-    def perform_create(self, serializer):
-        serializer.save(created_by=self.request.user)
-
-
-class ValidateViewSet(viewsets.ModelViewSet):
-    """
-    API endpoint that allows storagelocation to be viewed or edited.
-    """
-    queryset = Validate.objects.all()
-    serializer_class = ValidateSerializer
-    permission_classes = [permissions.IsAuthenticated, IsOwnerOrReadOnly]
-
-    def perform_create(self, serializer):
-        serializer.save(created_by=self.request.user)
+    def post(self, request):
+        login = WechatLogin(request.data['code'])
+        res = login.login()
+        return Response(res)

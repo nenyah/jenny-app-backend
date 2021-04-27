@@ -9,11 +9,7 @@ from django.contrib.auth.models import User
 # 通用属性
 class CommonInfo(models.Model):
     revision = models.IntegerField('乐观锁', default=0, blank=False)
-    created_by = models.ForeignKey(User,
-                                   related_name="%(app_label)s_%(class)s_related",
-                                   verbose_name='创建人',
-                                   related_query_name="%(app_label)s_%(class)ss",
-                                   on_delete=models.CASCADE)
+    created_by = models.CharField(max_length=256, blank=True, verbose_name="创建人", help_text="创建人")
     created_time = models.DateTimeField('创建时间', auto_now_add=True)
     updated_time = models.DateTimeField('更新时间', auto_now=True)
     is_active = models.BooleanField('是否启用', default=True)
@@ -40,86 +36,31 @@ class UserProfile(CommonInfo):
         return f"{self.user.__str__()}"
 
 
-# 储藏位置
-class Position(CommonInfo):
-    LOC_TYPE = (
-        (0, "楼层"),
-        (1, "房间"),
-        (2, "位置"),
-        (3, "不分"),
-    )
-    location = models.CharField('位置', max_length=32)
-    loc_type = models.IntegerField(choices=LOC_TYPE, verbose_name="位置分类", help_text="位置分类", default=0)
-    parent = models.ForeignKey('self',
-                               on_delete=models.CASCADE,
-                               verbose_name='归属位置',
-                               help_text='归属位置',
-                               null=True,
-                               blank=True)
-
-    class Meta:
-        verbose_name = '储存位置'
-        verbose_name_plural = verbose_name
-        ordering = ('id',)
-
-    def __str__(self):
-        return f"储存位置: {self.location}"
-
-
-# 效期
-class Validate(CommonInfo):
-    mfg = models.DateField('生产日期', null=True, blank=True)
-    vali_days = models.IntegerField('有效天数', null=True, blank=True)
-    exp = models.DateField('有效日期', null=True, blank=True)
-
-    def remain_days(self):
-        """
-        Use the exp to calculate the remain days.
-        :return: remain days int
-        """
-        today = datetime.date.today()
-        exp = self.exp
-        return (exp - today).days if (exp - today).days > 0 else 0
-
-    remain_days.admin_order_field = 'exp'
-    remain_days.short_description = '到期天数'
-
-    class Meta:
-        verbose_name = '有效日期'
-        verbose_name_plural = verbose_name
-        ordering = ['exp']
-
-    def save(self, *args, **kwargs):
-        """
-        Use the mfg and validays generate exp.
-        """
-        if self.exp is None:
-            if self.mfg is None:
-                raise Exception("生产日期和有效日期不能都为空")
-            else:
-                if self.vali_days is None:
-                    raise Exception("有效天数不能为空")
-                else:
-                    delta = datetime.timedelta(days=self.vali_days)
-                    self.exp = self.mfg + delta
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        return f"有效期：{self.exp}"
-
-
 # 货物
 class Goods(CommonInfo):
-    # user = models.ForeignKey(UserProfile, on_delete=models.CASCADE, verbose_name='用户')
-    position = models.ForeignKey(Position, on_delete=models.CASCADE, verbose_name='位置')
-    validate = models.OneToOneField(Validate, on_delete=models.CASCADE, verbose_name='有效期', null=True, blank=True)
+    # 基本信息
     img = models.ImageField('图片', upload_to='uploads/', null=True, blank=True)
     name = models.CharField('物品名称', max_length=125)
+    location = models.CharField('位置', max_length=32)
+    # 有效期
+    mfg = models.DateField('生产日期', null=True, blank=True)
+    duration = models.IntegerField('有效天数', null=True, blank=True)
+    exp = models.DateField('有效日期', null=True, blank=True)
 
     class Meta:
         verbose_name = '物品'
         verbose_name_plural = verbose_name
         ordering = ('id',)
 
+    def save(self, *args, **kwargs):
+        if self.exp is None:
+            if self.mfg is None:
+                raise Exception("有效日期和生产日期不能同时为空")
+            else:
+                if self.duration is None:
+                    raise Exception("有效天数不能为空")
+                self.exp = self.mfg + datetime.timedelta(days=self.duration)
+        super().save(*args, **kwargs)
+
     def __str__(self):
-        return f"物品:[{self.id}. {self.name}]"
+        return f"{self.name}"
